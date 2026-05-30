@@ -138,8 +138,8 @@
       <div><h2 class="text-3xl md:text-4xl font-bold">Dashboard under construction..</h2><p class="text-gray-400 mt-2">We’re working behind the scenes to bring you a smooth client management experience. Coming soon!</p></div>
      <!-- <div class="flex gap-2"><button onclick="openAuth()" class="btn btn-soft">Login / Create ID</button><button onclick="logout()" class="btn btn-soft">Logout</button></div>-->
     </div>
-
-    <!--<div id="loginNotice" class="card mb-6 text-yellow-200">Please login or create your own ID/password to manage the client list.</div>
+    <!-- Client Dashboard Inner - Start--> 
+    <div id="loginNotice" class="card mb-6 text-yellow-200">Please login or create your own ID/password to manage the client list.</div>
     <div id="clientApp" class="hidden">
       <div class="grid md:grid-cols-4 gap-4 mb-6">
         <div class="card"><div class="text-sm text-gray-400">Total Clients</div><div id="statTotal" class="text-3xl font-bold text-blue-300">0</div></div>
@@ -291,7 +291,7 @@
           </div>
         </div>
       </div>
-    </div> -->
+    </div> 
   </section> 
 
   <section id="contact" class="section bg-black/30">
@@ -377,12 +377,70 @@ function setClients(c){localStorage.setItem(STORAGE_CLIENTS,JSON.stringify(c))}
 function renderClientApp(){
   const logged=!!currentUser(); loginNotice.classList.toggle('hidden',logged); clientApp.classList.toggle('hidden',!logged); if(logged) renderClients();
 }
-function saveClient(){
+
+/*function saveClient(){
   if(!currentUser()) return openAuth();
   const name=clientName.value.trim(); if(!name) return alert('Client name required.');
   const item={id:editClientId||crypto.randomUUID(),name,phone:clientPhone.value.trim(),email:clientEmail.value.trim(),epfo:clientEpfo.value.trim(),esic:clientEsic.value.trim(),mpt:clientMpt.value.trim(),service:clientService.value,status:clientStatus.value,notes:clientNotes.value.trim(),createdAt:new Date().toISOString()};
   let list=getClients(); list=editClientId?list.map(x=>x.id===editClientId?{...x,...item}:x):[item,...list]; setClients(list); clearClientForm(); renderClients();
+}*/
+//updated function with firebase 
+async function saveClient(){
+
+  if(!currentUser()) return openAuth();
+
+  const name = clientName.value.trim();
+
+  if(!name) return alert('Client name required.');
+
+  const item = {
+      id: editClientId || crypto.randomUUID(),
+      name,
+      phone: clientPhone.value.trim(),
+      email: clientEmail.value.trim(),
+      epfo: clientEpfo.value.trim(),
+      esic: clientEsic.value.trim(),
+      mpt: clientMpt.value.trim(),
+      service: clientService.value,
+      status: clientStatus.value,
+      notes: clientNotes.value.trim(),
+      createdAt: new Date().toISOString()
+  };
+
+  try {
+
+      // SAVE TO FIREBASE
+      await addDoc(
+          collection(db, "clients"),
+          item
+      );
+
+      console.log("Client saved to Firebase");
+
+      // EXISTING LOCALSTORAGE LOGIC
+      let list = getClients();
+
+      list = editClientId
+          ? list.map(x => x.id === editClientId ? {...x,...item} : x)
+          : [item, ...list];
+
+      setClients(list);
+
+      clearClientForm();
+
+      renderClients();
+
+      alert("Client saved successfully!");
+
+  } catch(error) {
+
+      console.error(error);
+
+      alert("Firebase save failed");
+
+  }
 }
+
 function editClient(id){const c=getClients().find(x=>x.id===id); if(!c)return; editClientId=id; clientName.value=c.name||''; clientPhone.value=c.phone||''; clientEmail.value=c.email||''; clientEpfo.value=c.epfo||''; clientEsic.value=c.esic||''; clientMpt.value=c.mpt||''; clientService.value=c.service||'EPF Consulting'; clientStatus.value=c.status||'Active'; clientNotes.value=c.notes||''; window.scrollTo({top:document.getElementById('clients').offsetTop,behavior:'smooth'})}
 function deleteClient(id){if(!confirm('Delete this client and its employees?'))return; setClients(getClients().filter(x=>x.id!==id)); const all=getAllEmployees(); delete all[id]; setAllEmployees(all); if(selectedClientId===id) closeEmployeePanel(); renderClients();}
 function clearClientForm(){editClientId=null; ['clientName','clientPhone','clientEmail','clientEpfo','clientEsic','clientMpt','clientNotes'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); clientService.value='EPF Consulting'; clientStatus.value='Active';}
@@ -735,7 +793,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebas
 import {
   getFirestore,
   collection,
-  getDocs
+  getDocs,
+  addDoc
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 
@@ -752,8 +811,11 @@ const firebaseConfig = {
 
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
+
+window.db = db;
+window.collection = collection;
+window.addDoc = addDoc;
 
 async function testFirebase() {
 
