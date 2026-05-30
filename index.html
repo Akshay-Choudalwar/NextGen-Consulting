@@ -726,5 +726,50 @@ window.addEventListener('click',e=>{ if(e.target===quote) closeQuote(); if(e.tar
 window.onload=()=>{renderClientApp();};
 </script>
 
+<!--Added code to connect Firebase -->  
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDirTt9-_wPNWn_jNw6jrvsvfEO38sAvTw",
+  authDomain: "nextgen-consulting-bda29.firebaseapp.com",
+  projectId: "nextgen-consulting-bda29",
+  storageBucket: "nextgen-consulting-bda29.firebasestorage.app",
+  messagingSenderId: "892670091773",
+  appId: "1:892670091773:web:5ba24e40ebd0d7b9e47994",
+  measurementId: "G-B3XK7YC93Z"
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+async function testFirebase() {
+
+    const querySnapshot =
+      await getDocs(collection(db, "clients"));
+
+    querySnapshot.forEach((doc) => {
+        console.log(doc.id, doc.data());
+    });
+
+    alert("Firebase Connected! Check Console.");
+}
+
+window.testFirebase = testFirebase;
+
+</script>
+
+
 </body>
 </html>
